@@ -1,9 +1,10 @@
 package io.github.trojan_gfw.igniter;
 
 import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 
-import java.util.Objects;
+import java.io.File;
 
 import io.github.trojan_gfw.igniter.common.constants.ConfigFileConstants;
 
@@ -18,13 +19,21 @@ public class Globals {
         cacheDir = ctx.getCacheDir().getAbsolutePath();
         filesDir = ctx.getFilesDir().getAbsolutePath();
         trojanConfigInstance = new TrojanConfig();
-        trojanConfigInstance.setCaCertPath(Globals.getCaCertPath());
         exportDir = exportDir(ctx, filesDir);
     }
 
     private static String exportDir(Context ctx, String defaultDir) {
         try {
-            return Objects.requireNonNull(ctx.getExternalFilesDir(ConfigFileConstants.CONFIGS)).getAbsolutePath();
+            if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+                // external storage not ready
+                return defaultDir;
+            }
+            //external storage is ready
+            File externalFilesDir = ctx.getExternalFilesDir(ConfigFileConstants.CONFIGS);
+            if (externalFilesDir == null) {
+                return defaultDir;
+            }
+            return externalFilesDir.getAbsolutePath();
         } catch (Exception e) {
             Log.e("globals", "get export dir error", e);
         }
